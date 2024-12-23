@@ -307,12 +307,21 @@ class ChatRoom {
     async toggleAudioRecording() {
         try {
             if (!this.isRecording) {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        sampleRate: 44100,
+                        channelCount: 1
+                    }
+                });
                 
                 this.audioChunks = [];
+                this.audioStream = stream;
                 
                 const options = {
-                    mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg'
+                    audioBitsPerSecond: 128000,
+                    mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm'
                 };
                 
                 this.mediaRecorder = new MediaRecorder(stream, options);
@@ -325,11 +334,12 @@ class ChatRoom {
                 
                 this.mediaRecorder.onstop = async () => {
                     try {
-                        const mimeType = this.mediaRecorder.mimeType;
-                        const audioBlob = new Blob(this.audioChunks, { type: mimeType });
+                        const audioBlob = new Blob(this.audioChunks, { 
+                            type: this.mediaRecorder.mimeType 
+                        });
                         
-                        const audioFile = new File([audioBlob], 'audio.' + (mimeType.includes('webm') ? 'webm' : 'ogg'), {
-                            type: mimeType,
+                        const audioFile = new File([audioBlob], 'audio.webm', {
+                            type: this.mediaRecorder.mimeType,
                             lastModified: Date.now()
                         });
                         
@@ -338,38 +348,69 @@ class ChatRoom {
                         console.error('处理录音数据失败:', error);
                         alert('处理录音失败: ' + error.message);
                     } finally {
-                        stream.getTracks().forEach(track => track.stop());
+                        this.audioChunks = [];
+                        if (this.audioStream) {
+                            this.audioStream.getTracks().forEach(track => track.stop());
+                            this.audioStream = null;
+                        }
                     }
                 };
                 
-                // 开始录音
-                this.mediaRecorder.start();
+                // 开始录音，每秒生成一个数据块
+                this.mediaRecorder.start(1000);
                 this.isRecording = true;
                 this.audioBtn.classList.add('recording');
                 
-                // 添加录音指示器
+                // 添加录音指示器和倒计时
                 const indicator = document.createElement('div');
                 indicator.className = 'recording-indicator';
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'recording-time';
                 indicator.innerHTML = `
                     <div class="recording-dot"></div>
-                    <span>正在录音...</span>
+                    <span>录音中: </span>
                 `;
+                indicator.appendChild(timeSpan);
                 this.audioBtn.parentNode.appendChild(indicator);
                 
-                // 3秒后自动停止录音
-                setTimeout(() => {
+                // 倒计时显示
+                let remainingTime = 30;
+                this.recordingTimer = setInterval(() => {
+                    if (remainingTime <= 0) {
+                        this.toggleAudioRecording();
+                        return;
+                    }
+                    timeSpan.textContent = `${remainingTime}秒`;
+                    remainingTime--;
+                }, 1000);
+                
+                // 30秒后自动停止
+                this.recordingTimeout = setTimeout(() => {
                     if (this.isRecording) {
                         this.toggleAudioRecording();
                     }
-                }, 3000);
+                }, 30000); // 30秒 = 30000毫秒
                 
             } else {
                 // 停止录音
-                this.mediaRecorder.stop();
+                if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+                    this.mediaRecorder.stop();
+                }
+                
+                // 清理定时器
+                if (this.recordingTimer) {
+                    clearInterval(this.recordingTimer);
+                    this.recordingTimer = null;
+                }
+                if (this.recordingTimeout) {
+                    clearTimeout(this.recordingTimeout);
+                    this.recordingTimeout = null;
+                }
+                
                 this.isRecording = false;
                 this.audioBtn.classList.remove('recording');
                 
-                // 除录音指示器
+                // 移除录音指示器
                 const indicator = document.querySelector('.recording-indicator');
                 if (indicator) {
                     indicator.remove();
@@ -378,6 +419,8 @@ class ChatRoom {
         } catch (error) {
             console.error('录音失败:', error);
             alert('无法访问麦克风，请确保已授予录音权限');
+            this.isRecording = false;
+            this.audioBtn.classList.remove('recording');
         }
     }
     
@@ -895,7 +938,7 @@ class ChatRoom {
                 throw new Error(result.message);
             }
         } catch (error) {
-            console.error('发送用户状态失败:', error);
+            console.error('发送用户状态失���:', error);
         }
     }
 }
