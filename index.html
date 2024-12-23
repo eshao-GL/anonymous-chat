@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>匿名聊天室</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div class="chat-container">
+        <header class="chat-header">
+            <h1>匿名聊天室</h1>
+            <div class="header-controls">
+                <div class="online-count"></div>
+                <button id="settingsBtn" class="settings-btn">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </header>
+        
+        <div class="chat-messages" id="chatMessages">
+            <!-- 消息内容将在这里动态显示 -->
+        </div>
+        
+        <div class="chat-input-container">
+            <div class="input-controls">
+                <button id="emojiBtn" class="control-btn">😊</button>
+                <button id="imageBtn" class="control-btn">图片</button>
+                <button id="audioBtn" class="control-btn">语音</button>
+            </div>
+            <div class="message-input-wrapper">
+                <textarea id="messageInput" placeholder="输入消息..."></textarea>
+                <button id="sendBtn">发送</button>
+            </div>
+        </div>
+    </div>
+    <div class="image-preview-modal" id="imagePreviewModal">
+        <img src="" alt="预览图片">
+    </div>
+    <audio id="notificationSound" preload="auto">
+        <source src="assets/sounds/notification.mp3" type="audio/mpeg">
+    </audio>
+    <div class="settings-modal" id="settingsModal">
+        <div class="settings-content">
+            <h2>设置</h2>
+            <div class="settings-close">&times;</div>
+            
+            <div class="settings-item">
+                <label>头像</label>
+                <div class="avatar-upload">
+                    <img id="currentAvatar" src="assets/avatars/default.png" alt="头像">
+                    <div class="avatar-actions">
+                        <button id="changeAvatarBtn">上传头像</button>
+                        <button id="chooseAvatarBtn">选择预设</button>
+                    </div>
+                </div>
+                <div class="preset-avatars" style="display: none;">
+                    <!-- 预设头像会在这里动态加载 -->
+                </div>
+                <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+            </div>
+            
+            <div class="settings-item">
+                <label>昵称</label>
+                <input type="text" id="nicknameInput" placeholder="输入昵称" maxlength="20">
+            </div>
+            
+            <button id="saveSettingsBtn" class="save-settings-btn">保存设置</button>
+        </div>
+    </div>
+    <script src="assets/js/main.js"></script>
+</body>
+</html> 
