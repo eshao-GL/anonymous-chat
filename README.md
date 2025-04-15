@@ -24,7 +24,7 @@
 
 1. 克隆仓库到本地
 ```bash
-git clone https://github.com/yourusername/anonymous-chat.git
+git clone https://github.com/eshao-GL/anonymous-chat.git
 ```
 
 2. 确保服务器环境满足以下要求：
